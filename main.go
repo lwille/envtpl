@@ -1,4 +1,5 @@
 package main
+import "flag"
 
 import (
 	"bytes"
@@ -16,7 +17,7 @@ func usageAndExit(s string, code int) {
 	if s != "" {
 		fmt.Fprintf(os.Stderr, "!! %s\n", s)
 	}
-	fmt.Fprint(os.Stderr, "usage: envtpl [template]\n")
+	fmt.Fprint(os.Stderr, "usage: envtpl [--keep-template] [template]\n")
 	fmt.Fprintf(os.Stderr, "%s version: %s (%s on %s/%s; %s)\n", os.Args[0], Version, runtime.Version(), runtime.GOOS, runtime.GOARCH, runtime.Compiler)
 	os.Exit(code)
 }
@@ -27,7 +28,9 @@ func init() {
 }
 
 func main() {
-	args := os.Args[1:]
+	keepTemplate := flag.Bool("keep-template", false, "Keep the template file instead of deleting it") 
+  flag.Parse()
+	args := flag.Args() 
 	if len(args) == 0 {
 		usageAndExit("missing [template]", 1)
 	}
@@ -35,6 +38,7 @@ func main() {
 	if input == "--help" {
 		usageAndExit("", 0)
 	}
+
 	if len(input) < 4 || input[len(input)-4:] != ".tpl" {
 		usageAndExit("[template] does not end with .tpl", 1)
 	}
@@ -49,7 +53,9 @@ func main() {
 		os.Exit(1)
 	}
 	ioutil.WriteFile(input[:len(input)-4], b.Bytes(), 0644)
-	os.Remove(input)
+	if ! *keepTemplate {
+		os.Remove(input)
+	}
 }
 
 func getEnvironMap() map[string]string {
